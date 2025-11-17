@@ -1,8 +1,8 @@
 import random
 
 class deckOfCards:
-    def shuffle_cards(self):
-        cards = {"hearts":{
+    def __init__(self):
+        self.cards = {"hearts":{
                         "ace":1,
                         "2":2, 
                         "3":3, 
@@ -63,37 +63,39 @@ class deckOfCards:
                         "king":13
                         }
                     }
-        
+    def shuffle_cards(self):
         deck = []
-        for suit in cards:
-            for card_name in cards[suit]:
-                deck.append((suit, card_name, cards[suit][card_name]))
+        for suit in self.cards:
+            for card_name in self.cards[suit]:
+                deck.append((suit, card_name, self.cards[suit][card_name]))
         
         random.shuffle(deck)
         
         return deck
 
-class Node:
-    def __init__(self, data):
-        self.data = data
-        self.next = None
-
-class Stack:
+class Queue:
     def __init__(self):
-        self.top = None
+        self.queue = []
+    
+    def enqueue(self, item):
+        self.queue.append(item)
 
-    def push(self, data):
-        new_node = Node(data)
-        if self.top:
-            new_node.next = self.top
-        self.top = new_node
+    def dequeue(self):
+        return self.queue.pop(0)
+    
+    def display(self):
+        return self.queue
+    
+#-----actual game------#
 
+deck = deckOfCards()
+shuffled_deck = deck.shuffle_cards()
+queue = Queue()
 
-    def pop(self):
-        if self.top is None:
-            return None
-        else:
-            popped_node = self.top
-            self.top = self.top.next
-            popped_node.next = None
-            return popped_node.data
+for card in shuffled_deck[1:6]:
+    queue.enqueue(card)
+
+player = deck.shuffle_cards()[0]
+
+print("banker card:", queue.display())
+print("Player card:", player)
