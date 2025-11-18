@@ -118,21 +118,25 @@ balance = game.player.cash_in(amount)
 print(f"Your balance: {balance}")
 print("\nPlayer's card:", player_card)
 
-#-----betting system-----#
-while True:
-    try:
-        print("\n(Mininmum bet is 10.)")
-        bet = float(input("Please enter your bet: "))
-        if game.place_bet(bet):
-            break
-    except ValueError:
-        print("\nPlease enter a valid number.")
-
 #-----actual game-----#
 round_number = 1
 while game.banker.has_cards():
+    print(f"\n--- Round {round_number} ---")
+    print(f"Your current balance: ${game.player.check_balance()}")
+
+    #-----betting system-----#
+    while True:
+        try:
+            print("\n(Mininmum bet is 10.)")
+            bet = float(input("Place your bet for this round: "))
+            if game.place_bet(bet):
+                break
+        except ValueError:
+            print("\nPlease enter a valid number.")
+
     drawn_card = game.banker.draw()
-    print(f"\nRound {round_number}: Banker draws {drawn_card}")
+    print(f"\nBanker draws {drawn_card}")
+    print(f"Player has {player_card}")
     
     player_value = player_card[2]
     banker_value = drawn_card[2]
@@ -145,22 +149,22 @@ while game.banker.has_cards():
         game.player_lost()
     else:
         print("\nIt's a tie this round!")
-        print(f"Balance: {game.player.cash}")
         game.player.cash += game.bet # returning player's bet
         game.bet = 0 
-    
+        print(f"Bet returned. Balance: {game.player.cash}")
+
     if game.banker.has_cards():
         while True:
-            round_choice = input("\nWould you like to keep playing? (y/n): ").lower()
-            if round_choice == "y":
+            continue_choice = input("\nWould you like to keep playing? (y/n): ").lower()
+            if continue_choice == "y":
                 print("\nContinuing...")
                 break
-            elif round_choice == "n":
+            elif continue_choice == "n":
                 break
             else:
                 print("Enter y or n only.")
         
-        if round_choice == "n":
+        if continue_choice == "n":
             break
     
     round_number += 1
@@ -170,23 +174,34 @@ print(f"Final balance: ${game.player.check_balance()}")
 
 #-----cashout-----#
 while True:
-    try:
-        cashout_choice = input("Would you like to withdraw your winnings? (y/n): ").lower()
-        if cashout_choice == "y":
-            cashout_amount = float(input("How much do you want to withdraw? "))
-            withdrawn = game.player.cash_out(cashout_amount)
-            if withdrawn > 0:
-                print("Error. Cannot withdraw cash...")
-                print("Just kidding.")
-                print(f"You withdrew: {withdrawn}")
-                print(f"Remaining balance: {game.player.cash}")
-            break
-        elif cashout_choice == "n":
-            print("Saving cash.")
-            break
-        else:
-            print("Please enter y or n.")
-    except ValueError:
-        ("Please enter a valid number for withdrawal amount.")
+    cashout_choice = input("Would you like to withdraw your winnings? (y/n): ").lower()
+    
+    if cashout_choice == "y":
+        while True:
+            try:
+                cashout_amount = float(input(f"How much do you want to withdraw? (Balance: ${game.player.cash}): "))
+                
+                if cashout_amount <= 0:
+                    print("Withdrawal amount must be positive.")
+                elif cashout_amount > game.player.cash:
+                    print(f"Insufficient funds. You have ${game.player.cash}.")
+                else:
+                    withdrawn = game.player.cash_out(cashout_amount)
+                    print("Error. Cannot withdraw cash...")
+                    print("Just kidding.")
+                    print(f"You withdrew: ${withdrawn}")
+                    print(f"Remaining balance: ${game.player.cash}")
+                    break
+                    
+            except ValueError:
+                print("Please enter a valid number.")
+        break
+    
+    elif cashout_choice == "n":
+        print("Saving cash.")
+        break
+    
+    else:
+        print("Please enter y or n.")
 
 print("\nThank you for playing.")
