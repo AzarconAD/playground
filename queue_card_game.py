@@ -1,6 +1,6 @@
 import random
 
-class deckOfCards:
+class DeckOfCards:
     def __init__(self):
         self.suits = ["hearts", "diamonds", "clubs", "spades"]
         self.card_names = ["ace", "2", "3", "4", "5", "6", "7", "8", "9", "10", "jack", "queen", "king"]
@@ -13,7 +13,6 @@ class deckOfCards:
         
         random.shuffle(deck)
         return deck
-        return deck
 
 class Queue:
     def __init__(self):
@@ -23,7 +22,9 @@ class Queue:
         self.queue.append(item)
 
     def dequeue(self):
-        return self.queue.pop(0)
+        if self.queue:
+            return self.queue.pop(0)
+        return None
     
     def display(self):
         return self.queue
@@ -43,8 +44,8 @@ class Banker(Queue):
         return len(self.queue) > 0
 
 class Player:
-    def __init__(self):
-        self.cash = 0
+    def __init__(self, initial_cash=0):
+        self.cash = initial_cash
     
     def cash_in(self, deposit):
         if deposit > 0:
@@ -64,72 +65,128 @@ class Player:
     
     def check_balance(self):
         return self.cash
+
+class Game:
+    def __init__(self, initial_cash=0, min_bet=10):
+        self.player = Player(initial_cash)
+        self.banker = Banker()
+        self.bet = 0
+        self.min_bet = min_bet
+
+    def place_bet(self, bet_amount):
+        if bet_amount < self.min_bet:
+            print(f"Bet must be at least {self.min_bet}.")
+            return False
+        elif bet_amount > self.player.cash:
+            print(f"Insufficient funds. You have {self.player.cash}.")
+            return False
+        else:
+            self.bet = bet_amount
+            self.player.cash -= bet_amount
+            print("You bet:", self.bet)
+            return True
+        
+    def player_won(self):
+        if self.bet > 0:
+            winnings = self.bet * 2
+            self.player.cash += winnings
+            print(f"You win {winnings}! New balance: {self.player.cash}")
+            self.bet = 0
+            return winnings
+        return 0
     
+    def player_lost(self):
+        if self.bet > 0:
+            print(f"You lose {self.bet}. New balance: {self.player.cash}")
+            self.bet = 0
+
 #-----initialize game-----#
-deck = deckOfCards()
+deck = DeckOfCards()
 shuffled_deck = deck.shuffle_cards()
 
-banker = Banker()
-player = Player()
+game = Game()
 
 #-----enqueueing 5 cards to the banker's queue (hold)-----#
 for card in shuffled_deck[1:6]:
-    banker.enqueue(card)
+    game.banker.enqueue(card)
 
 player_card = shuffled_deck[0]
 
-#-----actual game-----#
 print("Please deposit first before playing the game.")
-
-amount = float(input("Amount: "))
-balance = player.cash_in(amount)
-
-# while player.check_balance() > 0:
-print("Your balance:", balance)
-print("Game is starting...")
-
-print("Player's card:", player_card)
+amount = float(input("\nAmount: "))
+balance = game.player.cash_in(amount)
+print(f"Your balance: {balance}")
+print("\nPlayer's card:", player_card)
 
 #-----betting system-----#
 while True:
     try:
-        min_bet = 10
-        print("Minimum bet is 10.")
-        bet = float(input("Your bet: "))
-        
-        if bet <= min_bet:
-            print("Bet must be greater than or equal to the minimum bet.")
-        elif bet > balance:
-            print(f"Insufficient funds. You have {balance}.")
-        else:
-            break  # Valid bet, exit the loop
-            
+        print("\n(Mininmum bet is 10.)")
+        bet = float(input("Please enter your bet: "))
+        if game.place_bet(bet):
+            break
     except ValueError:
-        print("Please enter a valid number.")
+        print("\nPlease enter a valid number.")
 
-#     round_number = 1
-#     while banker.has_cards():
-#         drawn_card = banker.draw()
-#         print(f"\nRound {round_number}: Banker draws {drawn_card}")
+#-----actual game-----#
+round_number = 1
+while game.banker.has_cards():
+    drawn_card = game.banker.draw()
+    print(f"\nRound {round_number}: Banker draws {drawn_card}")
+    
+    player_value = player_card[2]
+    banker_value = drawn_card[2]
+    
+    if player_value > banker_value:
+        print("\nPlayer wins this round!")
+        game.player_won()
+    elif player_value < banker_value:
+        print("\nBanker wins this round!")
+        game.player_lost()
+    else:
+        print("\nIt's a tie this round!")
+        print(f"Balance: {game.player.cash}")
+        game.player.cash += game.bet # returning player's bet
+        game.bet = 0 
+    
+    if game.banker.has_cards():
+        while True:
+            round_choice = input("\nWould you like to keep playing? (y/n): ").lower()
+            if round_choice == "y":
+                print("\nContinuing...")
+                break
+            elif round_choice == "n":
+                break
+            else:
+                print("Enter y or n only.")
         
-#         player_value = player_card[2]
-#         banker_value = drawn_card[2]
-        
-#         if player_value > banker_value:
-#             print("Player wins this round!")
-#             balance = bet * 2
-#         elif player_value < banker_value:
-#             print("Banker wins this round!")
-#             balance -= bet
-#         else:
-#             print("It's a tie this round!")
+        if round_choice == "n":
+            break
+    
+    round_number += 1
 
-#         choice = input("Would you like to keep playing? (y/n): ")
-#         if choice == "y":
-#             round_number += 1
-#         elif choice == "n":
-#             break
+print("\nGame over!")
+print(f"Final balance: ${game.player.check_balance()}")
 
-#     print("\nGame over!")
+#-----cashout-----#
+while True:
+    try:
+        cashout_choice = input("Would you like to withdraw your winnings? (y/n): ").lower()
+        if cashout_choice == "y":
+            cashout_amount = float(input("How much do you want to withdraw? "))
+            withdrawn = game.player.cash_out(cashout_amount)
+            if withdrawn > 0:
+                print("Error. Cannot withdraw cash...")
+                print("Just kidding.")
+                print(f"You withdrew: {withdrawn}")
+                print(f"Remaining balance: {game.player.cash}")
+            break
+        elif cashout_choice == "n":
+            print("Saving cash.")
+            break
+        else:
+            print("Please enter y or n.")
+    except ValueError:
+        ("Please enter a valid number for withdrawal amount.")
 
-# print("Balance:", player.check_balance())
+print("\nThank you for playing.")
