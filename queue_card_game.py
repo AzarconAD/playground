@@ -188,6 +188,24 @@ while game.banker.has_cards():
         
         if continue_choice == "n":
             break
+
+    #-----when the player has no money-----#
+    if game.player.cash == 0:
+        print("Oh no... you don't have enough balance. Cash in to play.")
+        while True:
+            continue_choice = input("\nWould you like to deposit to keep playing? (y/n): ").lower()
+            if continue_choice == "y":
+                amount = float(input("\nAmount: "))
+                balance = game.player.cash_in(amount)
+                print(f"Your balance: {balance}")
+                break
+            elif continue_choice == "n":
+                break
+            else:
+                print("Enter y or n only.")
+        
+        if continue_choice == "n":
+            break
     
     round_number += 1
 
@@ -195,7 +213,7 @@ print("\nGame over!")
 print(f"Final balance: ${game.player.check_balance()}")
 
 #-----cashout-----#
-while True:
+while game.player.cash != 0:
     cashout_choice = input("Would you like to withdraw your winnings? (y/n): ").lower()
     
     if cashout_choice == "y":
