@@ -12,7 +12,31 @@ class DeckOfCards:
                 for card_name, value in zip(self.card_names, self.values)]
         
         random.shuffle(deck)
-        return deck
+        
+        player_card = deck.pop(0)
+        player_value = player_card[2]
+        
+        higher_cards = [card for card in deck if card[2] > player_value]
+        lower_cards = [card for card in deck if card[2] <= player_value]
+        
+        total_banker_cards = 5
+        needed_higher = int(total_banker_cards * 0.75) # banker's card is always 75% higher than the player's card mwehehehe
+        needed_lower = total_banker_cards - needed_higher
+        
+        if len(higher_cards) < needed_higher:
+            needed_higher = len(higher_cards)
+            needed_lower = total_banker_cards - needed_higher
+        
+        if len(lower_cards) < needed_lower:
+            needed_lower = len(lower_cards)
+            needed_higher = total_banker_cards - needed_lower
+        
+        banker_cards = random.sample(higher_cards, needed_higher) + random.sample(lower_cards, needed_lower)
+        random.shuffle(banker_cards)
+        
+        remaining_deck = [card for card in deck if card not in banker_cards]
+        
+        return player_card, banker_cards
 
 class Queue:
     def __init__(self):
@@ -102,15 +126,13 @@ class Game:
 
 #-----initialize game-----#
 deck = DeckOfCards()
-shuffled_deck = deck.shuffle_cards()
+player_card, banker_cards = deck.shuffle_cards()
 
 game = Game()
 
 #-----enqueueing 5 cards to the banker's queue (hold)-----#
-for card in shuffled_deck[1:6]:
+for card in banker_cards:
     game.banker.enqueue(card)
-
-player_card = shuffled_deck[0]
 
 print("Please deposit first before playing the game.")
 amount = float(input("\nAmount: "))
